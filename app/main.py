@@ -7,7 +7,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.openapi.docs import get_redoc_html
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.core.config import get_settings
 from app.routers import contacts
@@ -57,9 +58,19 @@ The upcoming birthdays endpoint calculates each contact's next birthday:
     version=settings.app_version,
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc",
+    redoc_url=None,  # Disable default, use custom
     openapi_url="/openapi.json",
 )
+
+
+@app.get("/redoc", include_in_schema=False)
+def redoc_html() -> HTMLResponse:
+    """Custom ReDoc page with stable version."""
+    return get_redoc_html(
+        openapi_url=app.openapi_url or "/openapi.json",
+        title=f"{app.title} - ReDoc",
+        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2.1.3/bundles/redoc.standalone.js",
+    )
 
 # CORS middleware
 app.add_middleware(
